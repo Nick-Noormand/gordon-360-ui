@@ -78,7 +78,7 @@ export default class App extends Component {
               onSignOut={this.onAuthChange}
               Authentication={this.state.authentication}
             />
-            <main className="app-main">
+            <main className="app-main" style={{padding: this.state.authentication ? '1rem 0.5rem' : '0'}}>
               <Switch>
                 {routes.map(route => (
                   <Route

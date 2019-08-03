@@ -52,7 +52,6 @@ a {
   overflow-y: auto; // change this to scroll for ios to make the scroll smoothly
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 1rem 0.5rem;
   width: 100%;
   background-color: #ebeaea;
 }
@@ -85,7 +84,6 @@ a {
   .app-main {
     height: calc(100vh - #{$header-height-md});
     margin-top: $header-height-md;
-    padding: 1rem;
   }
 }
 @media (max-width: $break-md) {
