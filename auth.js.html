@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: auth.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: auth.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Authenticate with the API
+ *
+ * @module auth
+ */
+
+import { parseResponse } from './http';
+import storage from './storage';
+
+const base = process.env.REACT_APP_API_URL;
+
+/**
+ * Handle an authentication error
+ * @param {Error} err An authentication error
+ * @throws {Error} An error that can be shown to users (`error.message`)
+ */
+const handleError = err => {
+  console.error('Could not authenticate user:', err);
+  if (err.error &amp;&amp; err.error_description) {
+    throw new Error(err.error_description);
+  } else {
+    throw new Error('Something went wrong! Please contact CTS for help.');
+  }
+};
+
+/**
+ * Get token for user from backend
+ * @param {String} username Username in firstname.lastname format
+ * @param {String} password User's
+ *
+ * @return {String} Token for use on API requests
+ */
+const getAuth = (username, password) => {
+  if (username.includes('@gordon.edu')) username = username.replace('@gordon.edu', '');
+  else if (username.includes('Gordon.edu')) username = username.replace('@Gordon.edu', '');
+
+  const loginInfo = new URLSearchParams({
+    username,
+    password,
+    grant_type: 'password'
+  });
+  
+  const request = new Request(`${base}token`, {
+    method: 'post', 
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    //mode: 'no-cors',
+    credentials: 'include',
+    body: loginInfo
+  });
+ 
+  return fetch(request)
+    .then(parseResponse)
+    .then(data => data.access_token)
+    .catch(handleError);
+};
+
+/**
+ * Authenticate a user, saving the returned token for later use and caching the user's credentials
+ * for refreshing the token when it expires.
+ * @param {String} username Username in firstname.lastname format
+ * @param {String} password User's password
+ * @return {Promise.&lt;undefined>} Resolved when token is refreshed
+ */
+const authenticate = (username, password) =>
+  getAuth(username, password)
+    .then(token => {
+      storage.store('token', token);
+    })
+    .then(() => {
+      console.log('auth.js: authenticate() - done');
+    });
+
+/**
+ * Check if current session is authenticated
+ * @description This is a naive check. The session is considered authenticated if
+ * @return {Promise.&lt;boolean>} Whether session is authenticated or not
+ */
+const isAuthenticated = () => {
+  try {
+    const token = storage.get('token');
+    // Check that auth contains a token
+    return token &amp;&amp; token.length > 0;
+  } catch (err) {
+    console.log('auth.js: error occured getting token');
+    // Checks to see if Cache API is available before attempting to access it
+    if ('caches' in window) {
+      // Checks to see if Service Worker is available since these values would not exist
+      // if the service worker was unavailable
+      if (navigator.serviceWorker &amp;&amp; navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage('delete-global-variables');
+        navigator.serviceWorker.controller.postMessage('cancel-fetches');
+        if (localStorage.length > 0) {
+          storage.remove('status');
+          storage.remove('currentTerm');
+
+          // Removes all dynamic cache
+          navigator.serviceWorker.controller.postMessage('remove-dynamic-cache');
+        }
+      }
+    }
+    return false;
+  }
+};
+
+/**
+ * Sign a user out
+ * @description Removes all data from storage and cache
+ */
+const signOut = () => {
+  storage.remove('token');
+  // Checks to see if Cache API is available before attempting to access it
+  if ('caches' in window) {
+    // Checks to see if Service Worker is available since these values would not exist
+    // if the service worker was unavailable
+    if (navigator.serviceWorker &amp;&amp; navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage('delete-global-variables');
+      navigator.serviceWorker.controller.postMessage('cancel-fetches');
+      storage.remove('status');
+      storage.remove('currentTerm');
+
+      // Removes all dynamic cache
+      navigator.serviceWorker.controller.postMessage('remove-dynamic-cache');
+    }
+  }
+};
+
+export { authenticate, isAuthenticated, signOut };
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-activity.html">activity</a></li><li><a href="module-admin.html">admin</a></li><li><a href="module-analytics.html">analytics</a></li><li><a href="module-auth.html">auth</a></li><li><a href="module-cms.html">cms</a></li><li><a href="module-emails.html">emails</a></li><li><a href="module-error.html">error</a></li><li><a href="module-errorLog.html">errorLog</a></li><li><a href="module-event.html">event</a></li><li><a href="module-goStalk.html">goStalk</a></li><li><a href="module-http.html">http</a></li><li><a href="module-jobs.html">jobs</a></li><li><a href="module-membership.html">membership</a></li><li><a href="module-myschedule.html">myschedule</a></li><li><a href="module-people-search.html">people-search</a></li><li><a href="module-schedule.html">schedule</a></li><li><a href="module-schedulecontrol.html">schedulecontrol</a></li><li><a href="module-session.html">session</a></li><li><a href="module-storage.html">storage</a></li><li><a href="module-user.html">user</a></li><li><a href="module-version.html">version</a></li><li><a href="module-victory.html">victory</a></li></ul><h3>Classes</h3><ul><li><a href="AuthError.html">AuthError</a></li><li><a href="NotFoundError.html">NotFoundError</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Wed May 20 2020 07:39:14 GMT+0000 (UTC)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

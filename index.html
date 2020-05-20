@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+    
+
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>Guides</h1>
+<h2>Code Style</h2>
+<p>This project uses <a href="https://prettier.io/">Prettier</a>, an &quot;opinionated code formatter,&quot; to automatically format JavaScript, JSON, Sass, and Markdown files according to a common style.</p>
+<p>The advantage of using a code formatter is consistency between developers. Using ESLint with a strict style guide is one approach to consistency, but it still requires developer effort to fix code according to the ESLint rules. Prettier takes care of this without any effort from the developers.</p>
+<p>Prettier is used as a pre commit hook in this repository. This means that it will automatically format any staged code before it is committed. It can also be used as an <a href="https://prettier.io/docs/en/editors.html">extension for your editor</a>. This repository includes a setup for VS Code: when the extension is installed, files will be formatted automatically every time they are saved.</p>
+<p>ESLint and Stylelint are used in conjunction with Prettier to catch syntax errors, but not to check code style - that is taken care of solely by Prettier.</p>
+<h2>Dependencies</h2>
+<h3>Installing Dependencies</h3>
+<p>If you are adding a dependency to the project, you must use either <code>--save</code> or <code>--save-dev</code> with <code>npm install</code>. This will save the dependency and its current version to <code>package.json</code>, which means it will be installed automatically when <code>npm install</code> is run.</p>
+<ul>
+<li>If you are installing a dependency that will be used in development, such as a build tool, linter, or documentation tool, use <code>npm install --save-dev nameOfPackage</code>. This will save the dependency to the <code>devDependencies</code> property of <code>package.json</code>.</li>
+<li>If you are installing a production dependency, such as a charting library, a date formatting library, or a utility like Lodash, use <code>npm install --save nameOfPackage</code>. This will save the dependency to the <code>dependencies</code> property of <code>package.json</code>.</li>
+</ul>
+<p>To remove a dependency, use <code>npm rm nameOfPackage</code>.</p>
+<h3>Updating Dependencies</h3>
+<p>To see which depencies are out of date, run <code>npm outdated</code>.</p>
+<p>To update all depedencies to their latest allowed versions (as specified by the semver range in <code>package.json</code>), run <code>npm update --save --dev</code>. This command will save the latest versions of all production and development dependencies to <code>package.json</code> as the new minimum version. Read more about <code>npm update</code> <a href="https://docs.npmjs.com/cli/update">here</a>.</p>
+<h3>Semantic Versioning</h3>
+<p><a href="https://semver.org/">Semantic versioning</a> is a method of versioning software. From their website:</p>
+<blockquote>
+<p>Given a version number MAJOR.MINOR.PATCH, increment the:</p>
+<ul>
+<li>MAJOR version when you make incompatible API changes,</li>
+<li>MINOR version when you add functionality in a backwards-compatible manner, and</li>
+<li>PATCH version when you make backwards-compatible bug fixes.</li>
+</ul>
+<p>Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.</p>
+</blockquote>
+<p>npm uses semantic versioning ranges to specify a range of acceptable versions. For example, <code>^2.1.3</code> means &quot;any minor or patch release with the major version <code>2</code>&quot;. In other words, where <code>x</code> represents a version number that can change, this range means <code>2.x.x</code>.</p>
+<h2>File Organization</h2>
+<p>The source files for the app are in <code>./src</code>. The other top-level folders are as follows:</p>
+<ul>
+<li><code>.vscode</code> contains configuration for Visual Studio Code</li>
+<li><code>build</code> contains the built application; not tracked by Git</li>
+<li><code>node_modules</code> contains dependencies installed by <code>npm</code>; not tracked by Git</li>
+<li><code>public</code> contains assets that should not be processed by Webpack. Only files inside <code>public</code> can be used from <code>public/index.html</code>.</li>
+</ul>
+<p>The structure of the <code>src</code> directory is as follows:</p>
+<pre class="source"><code>├── components
+│   └── ...
+├── services
+│   └── ...
+├── views
+│   └── ...
+├── app.js
+├── app.test.js
+├── index.css
+├── index.js
+└── register-service-worker.js
+</code></pre>
+<h3>Components</h3>
+<pre class="source"><code>components
+├── Carousel
+│   └── index.js
+├── Header
+│   ├── components
+│   │   └── ...
+│   ├── gordon-logo-horiz-black.svg
+│   ├── header.css
+│   └── index.js
+└── ...
+</code></pre>
+<p>This folder contains components that, when used together, make up the views of the application. Each component should be small and focus on doing One Thing Well. Read about the <a href="http://atomicdesign.bradfrost.com/chapter-2/">Atomic Design Methodology</a> for a useful perspective on writing small, reusable components and composing them into larger areas of functionality.</p>
+<p>Each component must have a folder named in PascalCase (also known as upper camel case) containing a file called <code>index.js</code>. Using that filename allows the component to be imported by folder, instead of by file: <code>import MyComponent from './components/MyComponent</code> instead of <code>import MyComponent from './components/MyComponent/my-component</code>.</p>
+<p>A component folder can contain any resources needed by the component, such as images and CSS files. If there is more than one image or CSS file, a subdirectory named <code>images</code> or <code>styles</code> can be created inside the component folder.</p>
+<p>A component folder can contain its own <code>components</code> folder containing components that only apply to that component. This is a useful way to avoid polluting the top-level <code>./components</code> folder with single-use components. If a component in a nested component folder becomes useful to another component that is higher in the hierarchy than it is, that component should be moved up to the same level as that component. For example:</p>
+<pre class="source"><code>components
+├── Carousel
+│   └── index.js &lt;-- wants to use ../Header/components/MyButton
+└── Header
+    ├── components
+    │   └── MyButton
+    └── index.js &lt;-- uses ./components/MyButton
+</code></pre>
+<p>changes to</p>
+<pre class="source"><code>components
+├── Carousel
+│   └── index.js &lt;-- uses ../MyButton
+├── Header
+│   └── index.js &lt;-- uses ../MyButton
+└── MyButton
+</code></pre>
+<p><strong>Components should never have one-word names.</strong> This is to avoid naming collisions with external libraries and with future HTML elements. This application is using the convention of prefixing component names with <code>Gordon</code>, as in <code>GordonButton</code> or <code>GordonCarousel</code>. Note that folder and file names do not have to follow this convention (respectively, the two examples would be <code>./components/Button</code> and <code>./components/Carousel</code>); only the class names of the components and their imports have to follow it:</p>
+<pre class="prettyprint source lang-JavaScript"><code>// ./components/Button/index.js
+class GordonButton extends Component {}
+
+// ./views/Home/index.js
+import GordonButton from '../components/Button';
+</code></pre>
+<h3>Services</h3>
+<p>This folder contains modules that provide reusable functionality to components across the application.</p>
+<p>In general, <strong>components should not handle anything other than displaying and interacting with data</strong>. Any &quot;heavy lifting&quot; should be done in services or on the backend. For example, HTTP requests to the API, filtering a list of events, or parsing a date should take place in a service.</p>
+<p><strong>Services should be framework-agnostic.</strong> This app should be able to switch to Vue or Angular without changing any of the services.</p>
+<h3>Views</h3>
+<pre class="source"><code>views
+├── Home
+│   ├── components
+│   │   └── ...
+│   ├── home.css
+│   └── index.js
+└── Login
+    └── ...
+</code></pre>
+<p>This folder contains components that make up the discrete views of the application, for example &quot;home,&quot; &quot;login,&quot; and &quot;edit activity.&quot; Each view uses the same folder structure as components in <code>./components</code>. Each view represents a route defined in <code>./app.js</code>. The route's path should be similar to the name of the component, such as <code>ActivityEdit</code> having a path of <code>/activity/:activityId/edit</code>.</p>
+<p>Similar to component folders, a view folder can have its own <code>components</code> folder containing components that only apply to that view. If a component in one of these folders ends up being useful to another view, it should move to <code>./components</code> to be shared by both views.</p>
+<h2>Environment Variables</h2>
+<p>Environment-specific variables are located in the root directory of the project in the files <code>.env</code> and <code>.env.production</code>. <code>.env</code> contains variables for local development and testing. <code>.env.production</code> contains overrides of those variables specific to the production environments (360 and 360Train).</p>
+<p>To declare variables that should not be checked in to version control, create a file in the root directory called <code>.env.local</code>. This file will be ignored by git.</p>
+<p>These files are loaded by the scripts that run the development server and build the application. Variables in these files are available globally in the app as <code>process.env.REACT_APP_VARIABLE_NAME</code> (assuming one of the <code>.env</code> files contains the line <code>REACT_APP_VARIABLE_NAME=some-value</code>).</p>
+<p>Environment variables must be declared in all caps, must use snake case, and must begin with <code>REACT_APP_</code> (ex: <code>REACT_APP_API_URL</code> or <code>REACT_APP_PASSWORD</code>). Any environment variables that do not begin with <code>REACT_APP_</code> will be ignored.</p>
+<h2>Deployment</h2>
+<p>The deployment script <code>./scripts/deploy.sh</code> requires several environment variables to be defined in the Travis CI environment. These variables are documented at the top of the deployment script.</p>
+<p>The script deploys to either staging or production based on the branch it is running from. The <code>develop</code> branch deploys to staging, while the <code>master</code> branch deploys to production.</p>
+<p><code>develop</code> is the default branch on the repository, so all branches should be based on it and should merge back into it. Changes merged into <code>develop</code> will automatically deploy to the staging environment.</p>
+<h3>Deploying to Production</h3>
+<ol>
+<li>On the <a href="https://github.com/gordon-cs/gordon-360-ui">repository's home page on GitHub</a>, click &quot;New pull request.&quot;</li>
+<li>Change the &quot;base&quot; branch of the pull request to <code>master</code>. The &quot;compare&quot; branch should be set to <code>develop</code> by default.</li>
+<li>Enter a title starting with &quot;RELEASE:&quot; (optional, but useful for quickly finding releases in the Git history) and containing a brief summary of the changes that the release brings.</li>
+<li>Add reviewers. The pull request must be approved before it can be merged.</li>
+<li>Click &quot;Create pull request.&quot;</li>
+<li>When the pull request is approved, merge it. This will trigger a build that will automatically deploy <code>master</code> to production.</li>
+</ol></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-activity.html">activity</a></li><li><a href="module-admin.html">admin</a></li><li><a href="module-analytics.html">analytics</a></li><li><a href="module-auth.html">auth</a></li><li><a href="module-cms.html">cms</a></li><li><a href="module-emails.html">emails</a></li><li><a href="module-error.html">error</a></li><li><a href="module-errorLog.html">errorLog</a></li><li><a href="module-event.html">event</a></li><li><a href="module-goStalk.html">goStalk</a></li><li><a href="module-http.html">http</a></li><li><a href="module-jobs.html">jobs</a></li><li><a href="module-membership.html">membership</a></li><li><a href="module-myschedule.html">myschedule</a></li><li><a href="module-people-search.html">people-search</a></li><li><a href="module-schedule.html">schedule</a></li><li><a href="module-schedulecontrol.html">schedulecontrol</a></li><li><a href="module-session.html">session</a></li><li><a href="module-storage.html">storage</a></li><li><a href="module-user.html">user</a></li><li><a href="module-version.html">version</a></li><li><a href="module-victory.html">victory</a></li></ul><h3>Classes</h3><ul><li><a href="AuthError.html">AuthError</a></li><li><a href="NotFoundError.html">NotFoundError</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Wed May 20 2020 07:39:14 GMT+0000 (UTC)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

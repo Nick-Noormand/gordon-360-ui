@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: event.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: event.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Event
+ *
+ * @module event
+ */
+import { DateTime } from 'luxon';
+import http from './http';
+
+/**
+ * The first element is the start time of the event, the second element is the end time of the
+ * event, and the third element is the location of the event.
+ * @global
+ * @typedef {Array} EventOccurrence
+ * @example
+ * [
+ *   "2017-11-18T19:00:00-05:00",
+ *   "2017-11-18T22:00:00-05:00",
+ *   "Tavilla Hall 126 - Conference Room"
+ * ]
+ */
+
+/**
+ * @global
+ * @typedef Event
+ * @property {String} Event_ID
+ * @property {String} Event_Name
+ * @property {String} Event_Title
+ * @property {String} Event_Type_Name
+ * @property {Number} Category_Id
+ * @property {String} Description
+ * @property {EventOccurrence[]} Occurrences
+ */
+
+/**
+ * Get all events
+ * @return {Promise.&lt;Event[]>} returns all the events
+ */
+
+const getAllEvents = () => http.get('events/25Live/All');
+
+const getAllCLAWEvents = () => http.get('/events/25Live/CLAW');
+
+const getAllGuestEvents = () => http.get('events/25Live/Public');
+
+function formatevent(event) {
+  let beginTime;
+  let endTime;
+  if (event.Occurrences[0] &amp;&amp; event.Occurrences[0][0] &amp;&amp; event.Occurrences[0][1]) {
+    beginTime = DateTime.fromISO(event.Occurrences[0][0]).toFormat('t');
+    endTime = DateTime.fromISO(event.Occurrences[0][1]).toFormat('t');
+  }
+  const timeRange = `${beginTime} - ${endTime}`;
+  event.timeRange = timeRange;
+
+  let date;
+  if (event.Occurrences[0] &amp;&amp; event.Occurrences[0][0]) {
+    date = DateTime.fromISO(event.Occurrences[0][0]).toFormat('LLL d, yyyy');
+  }
+  event.date = date;
+
+  let title;
+  if (event.Event_Title === '') {
+    title = event.Event_Name;
+  } else {
+    title = event.Event_Title;
+  }
+  event.title = title;
+
+  let location;
+  if (event.Occurrences[0] &amp;&amp; event.Occurrences[0][2]) {
+    location = `${event.Occurrences[0][2]} `;
+  } else {
+    location = 'No location Listed';
+  }
+  event.location = location;
+
+  if (event.Description) {
+    if (event.Description === '' || event.Description.substring(0, 4) === '&lt;res') {
+      event.Description = 'No description available';
+    }
+    event.Description = event.Description.replace(/&amp;(#[0-9]+|[a-zA-Z]+);/g, ' ').replace(
+      /&lt;\/?[^>]+(>|$)/g,
+      ' ',
+    );
+  }
+  return event;
+}
+function filterbyCatagory(filters, allEvents) {
+  let filteredEvents = [];
+  if (
+    filters.chapelOffice ||
+    filters.art ||
+    filters.cec ||
+    filters.calendar ||
+    filters.admissions ||
+    filters.sports ||
+    filters.studentLife ||
+    filters.fair ||
+    filters.academics
+  ) {
+    for (let i = 0; i &lt; allEvents.length; i++) {
+      if (filters.chapelOffice &amp;&amp; allEvents[i].Organization === 'Chapel Office') {
+        filteredEvents.push(allEvents[i]);
+      } else if (
+        filters.art &amp;&amp;
+        (allEvents[i].Organization === 'Music Department' ||
+          allEvents[i].Organization === 'Theatre' ||
+          allEvents[i].Organization === 'Art Department')
+      ) {
+        filteredEvents.push(allEvents[i]);
+      } else if (filters.cec &amp;&amp; allEvents[i].Organization === 'Campus Events Council (CEC)') {
+        filteredEvents.push(allEvents[i]);
+      } else if (filters.calendar &amp;&amp; allEvents[i].Event_Type_Name === 'Calendar Announcement') {
+        filteredEvents.push(allEvents[i]);
+      } else if (filters.admissions &amp;&amp; allEvents[i].Organization === 'Admissions') {
+        filteredEvents.push(allEvents[i]);
+      } else if (filters.sports &amp;&amp; allEvents[i].Organization === 'Athletics') {
+        filteredEvents.push(allEvents[i]);
+      } else if (filters.studentLife &amp;&amp; allEvents[i].Organization === 'Office of Student Life') {
+        filteredEvents.push(allEvents[i]);
+      } else if (
+        filters.fair &amp;&amp;
+        (allEvents[i].Event_Type_Name === 'Festival' ||
+          allEvents[i].Event_Type_Name === 'Exhibition' ||
+          allEvents[i].Event_Type_Name === 'Fair/Expo')
+      ) {
+        filteredEvents.push(allEvents[i]);
+      } else if (
+        filters.academics &amp;&amp;
+        (allEvents[i].Event_Type_Name === 'Research Project' ||
+          allEvents[i].Event_Type_Name === 'Lecture/Speaker/Forum')
+      ) {
+        filteredEvents.push(allEvents[i]);
+      }
+    }
+  } else {
+    filteredEvents = null;
+  }
+  return filteredEvents;
+}
+
+function sortByTime(a, b) {
+  if (a.Occurrences[0][0] &lt; b.Occurrences[0][0]) {
+    return -1;
+  }
+  if (a.Occurrences[0][0] > b.Occurrences[0][0]) {
+    return 1;
+  }
+  return 0;
+}
+
+const getCLWEvents = async () => {
+  const allEvents = await getAllCLAWEvents();
+  const chapelEvents = [];
+  const date = new Date().getTime();
+  allEvents.sort(sortByTime);
+  for (let i = 0; i &lt; allEvents.length; i += 1) {
+    const startDate = new Date(allEvents[i].Occurrences[0][0]).getTime();
+
+    if (startDate > date) {
+      chapelEvents.push(allEvents[i]);
+    }
+    formatevent(allEvents[i]);
+  }
+  return chapelEvents.sort(sortByTime);
+};
+
+//Takes parameter of all events(formatted) so getting from database is not needed
+const getFutureEvents = allEvents => {
+  const futureEvents = [];
+  const date = new Date().getTime();
+  allEvents.sort(sortByTime);
+  for (let i = 0; i &lt; allEvents.length; i += 1) {
+    const startDate = new Date(allEvents[i].Occurrences[0][0]).getTime();
+    if (startDate > date) {
+      futureEvents.push(allEvents[i]);
+    }
+  }
+  return futureEvents.sort(sortByTime);
+};
+
+//Calls getAllEvents to get from database and then formats events
+const getAllEventsFormatted = async () => {
+  const allEvents = await getAllEvents();
+  const events = [];
+  allEvents.sort(sortByTime);
+  for (let i = 0; i &lt; allEvents.length; i += 1) {
+    events.push(allEvents[i]);
+    formatevent(allEvents[i]);
+  }
+  return events.sort(sortByTime);
+};
+
+//Calls getAllGuestEvents to get from database and then formats events
+const getAllGuestEventsFormatted = async () => {
+  const allGuest = await getAllGuestEvents();
+  const events = [];
+  allGuest.sort(sortByTime);
+  for (let i = 0; i &lt; allGuest.length; i += 1) {
+    events.push(allGuest[i]);
+    formatevent(allGuest[i]);
+  }
+  return events.sort(sortByTime);
+};
+
+const getFilteredEvents = filters => {
+  const allEvents = filters.events;
+  let filteredEvents = [];
+  let shownEvents = [];
+  filteredEvents = filterbyCatagory(filters, allEvents);
+  if (filteredEvents === null) {
+    filteredEvents = allEvents;
+  }
+
+  if (filters.chapelCredits) {
+    for (let k = 0; k &lt; filteredEvents.length; k++) {
+      if (filteredEvents[k].Category_Id === '85') {
+        shownEvents.push(filteredEvents[k]);
+      }
+    }
+    filteredEvents = shownEvents;
+  }
+
+  if (filters.search !== '') {
+    shownEvents = [];
+    for (let i = 0; i &lt; filteredEvents.length; i++) {
+      // search through the event title
+      if (filteredEvents[i].title.toLowerCase().includes(filters.search.toLowerCase())) {
+        shownEvents.push(filteredEvents[i]);
+        // search through the datezZ
+      } else if (filteredEvents[i].timeRange.toLowerCase().includes(filters.search.toLowerCase())) {
+        shownEvents.push(filteredEvents[i]);
+        // search through the event times
+      } else if (filteredEvents[i].date.toLowerCase().includes(filters.search.toLowerCase())) {
+        shownEvents.push(filteredEvents[i]);
+        // search through the location
+      } else if (filteredEvents[i].location.toLowerCase().includes(filters.search.toLowerCase())) {
+        shownEvents.push(filteredEvents[i]);
+      }
+    }
+    filteredEvents = shownEvents;
+  }
+  return filteredEvents;
+};
+
+export default {
+  getAllEvents,
+  getAllEventsFormatted,
+  getFutureEvents,
+  getCLWEvents,
+  getFilteredEvents,
+  formatevent,
+  getAllGuestEvents,
+  getAllGuestEventsFormatted,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-activity.html">activity</a></li><li><a href="module-admin.html">admin</a></li><li><a href="module-analytics.html">analytics</a></li><li><a href="module-auth.html">auth</a></li><li><a href="module-cms.html">cms</a></li><li><a href="module-emails.html">emails</a></li><li><a href="module-error.html">error</a></li><li><a href="module-errorLog.html">errorLog</a></li><li><a href="module-event.html">event</a></li><li><a href="module-goStalk.html">goStalk</a></li><li><a href="module-http.html">http</a></li><li><a href="module-jobs.html">jobs</a></li><li><a href="module-membership.html">membership</a></li><li><a href="module-myschedule.html">myschedule</a></li><li><a href="module-people-search.html">people-search</a></li><li><a href="module-schedule.html">schedule</a></li><li><a href="module-schedulecontrol.html">schedulecontrol</a></li><li><a href="module-session.html">session</a></li><li><a href="module-storage.html">storage</a></li><li><a href="module-user.html">user</a></li><li><a href="module-version.html">version</a></li><li><a href="module-victory.html">victory</a></li></ul><h3>Classes</h3><ul><li><a href="AuthError.html">AuthError</a></li><li><a href="NotFoundError.html">NotFoundError</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Wed May 20 2020 07:39:14 GMT+0000 (UTC)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

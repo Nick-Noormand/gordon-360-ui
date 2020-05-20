@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: http.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: http.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Handle HTTP requests to the API
+ *
+ * @module http
+ */
+
+import { createError } from './error';
+import storage from './storage';
+import { isAuthenticated } from './auth';
+
+const base = process.env.REACT_APP_API_URL;
+
+/**
+ * Make a headers object with just authentication options for use with the API
+ * @description Provides the correct authorization for API requests.
+ * @param {object|array} headerOptions options to put in the header, if empty only auth is added
+ * @return {Headers} A headers object
+ */
+const makeHeaders = headerOptions => {
+  if (isAuthenticated()) {
+    if (headerOptions === undefined) {
+      try {
+        const token = storage.get('token');
+        return new Headers({
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        });
+      } catch (err) {
+        throw new Error('Token is not available');
+      }
+    } else {
+      try {
+        const token = storage.get('token');
+        return new Headers({
+          Authorization: `Bearer ${token}`,
+        });
+      } catch (err) {
+        throw new Error('Token is not available');
+      }
+    }
+  } else {
+    return new Headers({
+      Authorization: `Bearer `,
+      'Content-Type': 'application/json',
+    });
+  }
+};
+
+/**
+ * Create a request object with the correct URL and headers for the API
+ * @param {String} url relative URL from base, ex: `activity/023487` (no leading slash)
+ * @param {String} method HTTP method
+ * @param {object|array} body data to send with request
+ * @param {object|array} headerOptions options to put in the header, if empty only auth is added
+ * @return {Request} A request object
+ */
+const createRequest = (url, method, body, headerOptions) =>
+  new Request(`${base}api/${url}`, {
+    method,
+    body,
+    headers: makeHeaders(headerOptions),
+  });
+
+/**
+ * Parse an HTTP response
+ * @param {Response} res HTTP response
+ * @return {Promise.&lt;Object|Array|String|Number>} Resolves with response body; rejects on non-2xx
+ * response code
+ */
+export const parseResponse = res => {
+  // Parse body of response if not empty
+  //    Make sure text of response is not empty before trying to convert it
+  //    to a JSON object
+  const json = res
+    .text()
+    .then(text => (text.length ? JSON.parse(text) : {}))
+    // Handle error if response body is not valid JSON
+    .catch(err => Promise.reject(createError(err, res)));
+
+  // Handle error when response body is valid but status code is not
+  if (!res.ok) {
+    return json.then(data => Promise.reject(createError(data, res)));
+  }
+  return json;
+};
+
+/**
+ * Make a request to the API
+ * @param {String} url relative URL from base, ex: `activity/023487` (no leading slash)
+ * @param {String} method HTTP method
+ * @param {object|array} body data to send with request
+ * @param {object|array} headerOptions options to send to the header, only auth is added
+ * @return {Promise.&lt;Object>} Response body
+ */
+const makeRequest = (url, method, body, headerOptions) =>
+  fetch(createRequest(url, method, body, headerOptions)).then(parseResponse);
+
+/**
+ * Get
+ * @param {String} url relative URL from base, ex: `activity/023487` (no leading slash)
+ * @return {Promise.&lt;Object>} Response body
+ */
+const get = url => makeRequest(url, 'get');
+
+/**
+ * Put
+ * @param {String} url relative URL from base, ex: `activity/023487` (no leading slash)
+ * @param {object|array} body data to send with request
+ * @return {Promise.&lt;Object>} Response body
+ */
+const put = (url, body) => makeRequest(url, 'put', JSON.stringify(body));
+
+/**
+ * Post
+ * @param {String} url relative URL from base, ex: `activity/023487` (no leading slash)
+ * @param {object|array} body data to send with request, needs to be JSON object
+ * @param {object|array} headerOptions options to put in the header, if not undefined options are added, if empty only auth is added
+ * @return {Promise.&lt;Object>} Response body
+ */
+const post = (url, body, headerOptions) => {
+  if (headerOptions !== undefined) {
+    return makeRequest(url, 'post', body, headerOptions);
+  } else {
+    return makeRequest(url, 'post', JSON.stringify(body));
+  }
+};
+
+/**
+ * Delete
+ * @param {String} url relative URL from base, ex: `activity/023487` (no leading slash)
+ * @return {Promise.&lt;Object>} Response body
+ */
+const del = url => makeRequest(url, 'delete');
+
+export default {
+  del,
+  get,
+  post,
+  put,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-activity.html">activity</a></li><li><a href="module-admin.html">admin</a></li><li><a href="module-analytics.html">analytics</a></li><li><a href="module-auth.html">auth</a></li><li><a href="module-cms.html">cms</a></li><li><a href="module-emails.html">emails</a></li><li><a href="module-error.html">error</a></li><li><a href="module-errorLog.html">errorLog</a></li><li><a href="module-event.html">event</a></li><li><a href="module-goStalk.html">goStalk</a></li><li><a href="module-http.html">http</a></li><li><a href="module-jobs.html">jobs</a></li><li><a href="module-membership.html">membership</a></li><li><a href="module-myschedule.html">myschedule</a></li><li><a href="module-people-search.html">people-search</a></li><li><a href="module-schedule.html">schedule</a></li><li><a href="module-schedulecontrol.html">schedulecontrol</a></li><li><a href="module-session.html">session</a></li><li><a href="module-storage.html">storage</a></li><li><a href="module-user.html">user</a></li><li><a href="module-version.html">version</a></li><li><a href="module-victory.html">victory</a></li></ul><h3>Classes</h3><ul><li><a href="AuthError.html">AuthError</a></li><li><a href="NotFoundError.html">NotFoundError</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Wed May 20 2020 07:39:14 GMT+0000 (UTC)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

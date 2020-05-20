@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: activity.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: activity.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Activity
+ *
+ * @module activity
+ */
+
+import sortBy from 'lodash/sortBy';
+
+import http from './http';
+
+/**
+ * @global
+ * @typedef Activity
+ * @property {String} ActivityBlurb
+ * @property {String} ActivityCode
+ * @property {String} ActivityDescription
+ * @property {String} ActivityImagePath
+ * @property {String} ActivityJoinInfo
+ * @property {String} ActivityType
+ * @property {String} ActivityTypeDescription
+ * @property {String} ActivityURL
+ * @property {String} Privacy Whether the club is private or public to everyone, such as a scholars group etc. false=public true=private
+ */
+
+/**
+ * @global
+ * @typedef Person
+ * @property {String} FirstName First name
+ * @property {String} LastName Last name
+ * @property {Stirng} Email Email address
+ */
+
+/**
+ * Close out an activity, like confirm final roster
+ * @param {String} activityCode Identifier for an activity
+ * @param {String} sessionCode Identifier for a session
+ * @return {Promise&lt;any>} Response body
+ */
+const closeActivity = async (activityCode, sessionCode) => {
+  return await http.put(`activities/${activityCode}/session/${sessionCode}/close`, null);
+};
+/**
+ * Edit activity
+ * @param {String} activityCode Identifier for an activity
+ * @param {Object} data Data passed in
+ * @return {Promise.&lt;Object>} Response body
+ */
+const editActivity = async (activityCode, data) => {
+  return await http.put(`activities/${activityCode}`, data);
+};
+
+/**
+ * Sets image to new image
+ * @param {String} activityCode Identifier for an activity
+ * @param {string} dataURI of the image being uploaded
+ * @return {Promis&lt;any>} Response body
+ */
+const setActivityImage = (activityCode, dataURI) => {
+  let imageData = new FormData();
+  let blob = dataURItoBlob(dataURI);
+  let type = blob.type.replace('image/', '');
+  let headerOptions = { key: 'this is a post' };
+  imageData.append('canvasImage', blob, 'canvasImage.' + type);
+  return http.post(`activities/${activityCode}/image/`, imageData, headerOptions);
+};
+
+// convert data to blob
+function dataURItoBlob(dataURI) {
+  // convert base64/URLEncoded data component to raw binary data held in a string
+  var byteString;
+  if (dataURI.split(',')[0].indexOf('base64') >= 0) byteString = atob(dataURI.split(',')[1]);
+  else byteString = unescape(dataURI.split(',')[1]);
+
+  // separate out the mime component
+  var mimeString = dataURI
+    .split(',')[0]
+    .split(':')[1]
+    .split(';')[0];
+
+  // write the bytes of the string to a typed array
+  var ia = new Uint8Array(byteString.length);
+  for (var i = 0; i &lt; byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+
+  return new Blob([ia], { type: mimeString });
+}
+
+/**
+ * Get an activity
+ * @param {String} activityCode Identifier for an activity
+ * @return {Promise.&lt;Activity>} Activity
+ */
+const get = activityCode => http.get(`activities/${activityCode}`);
+
+/**
+ * Get advisors for an activity
+ * @param {String} activityCode Identifier for an activity
+ * @param {String} sessionCode Identifier for a session
+ * @returns {Person[]} List of advisors
+ */
+const getAdvisors = (activityCode, sessionCode) =>
+  http.get(`emails/activity/${activityCode}/advisors/session/${sessionCode}`);
+
+/**
+ * Get all activities for a session, sorted alphabetically by description
+ * @param {String} sessionCode Identifier for a session
+ * @return {Promise.&lt;Activity[]>} List of activities
+ */
+const getAll = sessionCode =>
+  http
+    .get(`activities/session/${sessionCode}`)
+    .then(activities => sortBy(activities, activity => activity.ActivityDescription));
+
+/**
+ * Get group administrators for an activity
+ * @param {String} activityCode Identifier for an activity
+ * @param {String} sessionCode Identifier for a session
+ * @returns {Person[]} List of group administrators
+ */
+const getGroupAdmins = (activityCode, sessionCode) =>
+  http.get(`emails/activity/${activityCode}/group-admin/session/${sessionCode}`);
+
+/**
+ * Get the status of an activity
+ * @param {String} activityCode Identifier for an activity
+ * @param {String} sessionCode Identifier for a session
+ * @returns {String} Status
+ */
+const getStatus = (activityCode, sessionCode) =>
+  http.get(`activities/${sessionCode}/${activityCode}/status`);
+
+/**
+ * Get all activity types for a session
+ * @param {String} sessionCode Identifier for a session
+ * @return {Promise.&lt;String[]>} List of activity types for a session
+ */
+const getTypes = sessionCode => http.get(`activities/session/${sessionCode}/types`);
+
+/**
+ * Get all open activities for a session
+ * @return {Promise.&lt;Activities[]>} List of open activities for a session
+ */
+const getOpen = () => http.get(`activities/open`);
+
+/**
+ * Get all closed activities for a session
+ * @return {Promise.&lt;Activities[]>} List of closed activities for a session
+ */
+const getClosed = () => http.get(`activities/closed`);
+
+/**
+ * Filter a list of activities by type and description
+ * @param {Activity[]} [activities=[]] List of activities
+ * @param {String} typeDescription Activity type description to match exactly against
+ * @param {String} [search=''] Search value to fuzzy match description against
+ * @return {Activity[]} Filtered activities
+ */
+const filter = (activities = [], typeDescription, search = '') => {
+  let filteredActivities = activities;
+  if (typeDescription) {
+    filteredActivities = filteredActivities.filter(
+      activity => activity.ActivityTypeDescription === typeDescription,
+    );
+  }
+
+  if (search !== '') {
+    filteredActivities = filteredActivities.filter(({ ActivityDescription: description }) =>
+      description.toLowerCase().includes(search.toLowerCase()),
+    );
+  }
+
+  return filteredActivities;
+};
+
+/**
+ * Reopen a closed activity
+ * @param {String} activityCode Identifier for an activity
+ * @param {String} sessionCode Identifier for a session
+ * @return {Promise&lt;any>} Response body
+ */
+const reopenActivity = async (activityCode, sessionCode) => {
+  return await http.put(`activities/${activityCode}/session/${sessionCode}/open`, null);
+};
+
+/**
+ * Resets image to default image
+ * @param {String} activityCode Identifier for an activity
+ * @return {Promis&lt;any>} Response body
+ */
+const resetImage = async activityCode => {
+  return await http.post(`activities/${activityCode}/image/reset`, null);
+};
+
+export default {
+  closeActivity,
+  editActivity,
+  setActivityImage,
+  get,
+  getAdvisors,
+  getAll,
+  getGroupAdmins,
+  getStatus,
+  getTypes,
+  getOpen,
+  getClosed,
+  filter,
+  reopenActivity,
+  resetImage,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-activity.html">activity</a></li><li><a href="module-admin.html">admin</a></li><li><a href="module-analytics.html">analytics</a></li><li><a href="module-auth.html">auth</a></li><li><a href="module-cms.html">cms</a></li><li><a href="module-emails.html">emails</a></li><li><a href="module-error.html">error</a></li><li><a href="module-errorLog.html">errorLog</a></li><li><a href="module-event.html">event</a></li><li><a href="module-goStalk.html">goStalk</a></li><li><a href="module-http.html">http</a></li><li><a href="module-jobs.html">jobs</a></li><li><a href="module-membership.html">membership</a></li><li><a href="module-myschedule.html">myschedule</a></li><li><a href="module-people-search.html">people-search</a></li><li><a href="module-schedule.html">schedule</a></li><li><a href="module-schedulecontrol.html">schedulecontrol</a></li><li><a href="module-session.html">session</a></li><li><a href="module-storage.html">storage</a></li><li><a href="module-user.html">user</a></li><li><a href="module-version.html">version</a></li><li><a href="module-victory.html">victory</a></li></ul><h3>Classes</h3><ul><li><a href="AuthError.html">AuthError</a></li><li><a href="NotFoundError.html">NotFoundError</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Wed May 20 2020 07:39:14 GMT+0000 (UTC)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

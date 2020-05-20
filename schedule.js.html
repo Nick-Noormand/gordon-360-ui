@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: schedule.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: schedule.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Schedule
+ *
+ * @module schedule
+ */
+
+import moment from 'moment';
+import http from './http';
+
+/**
+ * @global
+ * @typedef Schedule
+ * @property {String} CRS_CDE
+ * @property {String} CRS_TITLE
+ * @property {String} BLDG_CDE
+ * @property {String} ROOM_CDE
+ * @property {String} MONDAY_CDE
+ * @property {String} TUESDAY_CDE
+ * @property {String} WEDNESDAY_CDE
+ * @property {String} THURSDAY_CDE
+ * @property {String} FRIDAY_CDE
+ * @property {TimeSpan} BEGIN_TIME
+ * @property {TimeSpan} END_TIME
+ */
+
+
+/**
+ * Get course schedule for the current user
+ * @return {Promise.&lt;Schedule[]>} returns all the course schedules
+ */
+
+const getScheduleMyProf = async () => {
+  let schedule;
+  schedule = await http.get('schedule');
+  return schedule;
+};
+
+/**
+ * Get course schedule for a given user
+ * @param {String} [username] Username in firstname.lastname format
+ * @return {Promise.&lt;Schedule[]>} returns all the course schedules
+ */
+
+const getSchedule = async username => {
+  let schedule;
+  schedule = await http.get(`schedule/${username}/`);
+
+  return schedule;
+};
+
+/**
+ * Find out which day of the week the course is assigned
+ * @param {Promise.&lt;Schedule>} course an individual course
+ * @return {number[]} returns array of day in the format of ResourceID
+ */
+
+function checkDayofWeek(course) {
+  let dayArray = [];
+
+  if (course.MONDAY_CDE === 'M') {
+    dayArray.push(2);
+  }
+  if (course.TUESDAY_CDE === 'T') {
+    dayArray.push(3);
+  }
+  if (course.WEDNESDAY_CDE === 'W') {
+    dayArray.push(4);
+  }
+  if (course.THURSDAY_CDE === 'R') {
+    dayArray.push(5);
+  }
+  if (course.FRIDAY_CDE === 'F') {
+    dayArray.push(6);
+  }
+
+  return dayArray;
+}
+
+/**
+ * Format the given schedule and make event array
+ * @param {Promise.&lt;Schedule[]>} schedule all course schedules
+ * @return {Promise.Object[]} returns array of events
+ */
+
+async function makeScheduleCourses(schedule) {
+  let course = await schedule.then(courseSchedule => {
+    return courseSchedule;
+  });
+  let today = moment();
+  let eventArray = [];
+  let eventId = 0;
+  for (let i = 0; i &lt; course.length; i++) {
+    course[i].CRS_CDE = course[i].CRS_CDE.trim();
+    course[i].CRS_TITLE = course[i].CRS_TITLE.trim();
+    let beginTime = moment(course[i].BEGIN_TIME, 'HH:mm:ss');
+    beginTime.set('y', today.year());
+    beginTime.set('M', today.month());
+    beginTime.set('d', today.day());
+    let endTime = moment(course[i].END_TIME, 'HH:mm:ss');
+    endTime.set('y', today.year());
+    endTime.set('M', today.month());
+    endTime.set('d', today.day());
+    let dayArray = checkDayofWeek(course[i]);
+    let courseTitle = course[i].CRS_CDE + ' in ' + course[i].BLDG_CDE + ' ' + course[i].ROOM_CDE;
+    for (let j = 0; j &lt; dayArray.length; j++) {
+      const courseEvent = {
+        id: eventId,
+        title: courseTitle,
+        start: beginTime.toDate(),
+        end: endTime.toDate(),
+        resourceId: dayArray[j],
+      };
+      eventArray.push(courseEvent);
+      eventId++;
+    }
+    eventId++;
+  }
+  return eventArray;
+}
+
+export default {
+  getSchedule,
+  getScheduleMyProf,
+  makeScheduleCourses,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-activity.html">activity</a></li><li><a href="module-admin.html">admin</a></li><li><a href="module-analytics.html">analytics</a></li><li><a href="module-auth.html">auth</a></li><li><a href="module-cms.html">cms</a></li><li><a href="module-emails.html">emails</a></li><li><a href="module-error.html">error</a></li><li><a href="module-errorLog.html">errorLog</a></li><li><a href="module-event.html">event</a></li><li><a href="module-goStalk.html">goStalk</a></li><li><a href="module-http.html">http</a></li><li><a href="module-jobs.html">jobs</a></li><li><a href="module-membership.html">membership</a></li><li><a href="module-myschedule.html">myschedule</a></li><li><a href="module-people-search.html">people-search</a></li><li><a href="module-schedule.html">schedule</a></li><li><a href="module-schedulecontrol.html">schedulecontrol</a></li><li><a href="module-session.html">session</a></li><li><a href="module-storage.html">storage</a></li><li><a href="module-user.html">user</a></li><li><a href="module-version.html">version</a></li><li><a href="module-victory.html">victory</a></li></ul><h3>Classes</h3><ul><li><a href="AuthError.html">AuthError</a></li><li><a href="NotFoundError.html">NotFoundError</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Wed May 20 2020 07:39:14 GMT+0000 (UTC)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
